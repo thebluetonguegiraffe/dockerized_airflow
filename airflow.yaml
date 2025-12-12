@@ -1,0 +1,58 @@
+services:
+  airflow:
+    container_name: airflow
+    build:
+      context: .
+      # use our own image as it contains all dependencies to run dags
+      dockerfile: Dockerfile.airflow
+    command: standalone
+    ports:
+      - "8080:8080"
+
+    environment:
+      AIRFLOW__CORE__EXECUTOR: SequentialExecutor
+
+      # Path to SQLite DB (only for local development)
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: sqlite:////opt/airflow/airflow.db
+
+      # Disable Airflow example DAGs
+      AIRFLOW__CORE__LOAD_EXAMPLES: 'False'
+
+      # SMTP / Email configuration
+      AIRFLOW__SMTP__SMTP_HOST: smtp.gmail.com
+      AIRFLOW__SMTP__SMTP_STARTTLS: 'True'
+      AIRFLOW__SMTP__SMTP_SSL: 'False'
+      AIRFLOW__SMTP__SMTP_PORT: 587
+      AIRFLOW__SMTP__SMTP_MAIL_FROM: thebluetonguegiraffe@gmail.com
+      AIRFLOW__SMTP__SMTP_USER: thebluetonguegiraffe@gmail.com
+
+      # Make sure your .env file contains GMAIL_PWD
+      AIRFLOW__SMTP__SMTP_PASSWORD: ${GMAIL_PWD}
+
+    volumes:
+      # 1. Logs (essential for viewing locally)
+      # './logs' means the 'logs' folder next to this YAML file
+      - ./airflow/logs:/opt/airflow/logs
+
+      # 2. Global DAGs (for general scripts in .airflow/dags)
+      - ./airflow/dags:/opt/airflow/dags
+
+      # 3. Project-specific DAGs (The News Hub)
+      - ${HOME}/the_news_hub/airflow/dags:/opt/airflow/dags/the_news_hub
+
+      # 4. Plugins (CRITICAL for 'src' to work!)
+      - ./airflow/plugins:/opt/airflow/plugins
+
+      # 5. (Optional) Persist SQLite DB outside the container
+      - ./airflow/airflow.db:/opt/airflow/airflow.db
+
+      # 6. enables airflow creating other containers
+      - /var/run/docker.sock:/var/run/docker.sock
+
+    # Use the same UID as host to avoid permission issues
+    user: "${AIRFLOW_UID}:0"
+    group_add:
+    - "1002" 
+
+    # Restart container unless stopped manually
+    restart: unless-stopped
