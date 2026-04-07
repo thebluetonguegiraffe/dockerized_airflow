@@ -40,6 +40,7 @@ services:
       # 3. Project-specific DAGs (The News Hub)
       - ${HOME}/the_news_hub/airflow_dags:/opt/airflow/dags/the_news_hub
       - ${HOME}/artguide/dags:${HOME}/artguide/dags
+      - ${HOME}/netweave/airflow_dags:/opt/airflow/dags/netweave
 
       # 4. Plugins (CRITICAL for 'src' to work!)
       - ./airflow/plugins:/opt/airflow/plugins
