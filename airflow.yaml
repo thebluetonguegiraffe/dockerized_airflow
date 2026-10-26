@@ -61,7 +61,9 @@ services:
       - ${HOME}/the_news_hub/airflow_dags:/opt/airflow/dags/the_news_hub
       - ${HOME}/artguide/dags:${HOME}/artguide/dags
       - ${HOME}/netweave/airflow_dags:/opt/airflow/dags/netweave
-
+      - ${HOME}/llm_lens/dags/:/opt/airflow/dags/llm_lens
+      - ${HOME}/llm_lens:/opt/airflow/llm_lens 
+     
       # 4. Plugins (CRITICAL for 'src' to work!)
       - ./airflow/plugins:/opt/airflow/plugins
 
