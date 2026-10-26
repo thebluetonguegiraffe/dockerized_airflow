@@ -1,4 +1,6 @@
 FROM apache/airflow:2.9.0
 
 USER airflow
-RUN pip install apache-airflow-providers-docker
+RUN pip install apache-airflow-providers-docker apache-airflow-providers-postgres
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh
+ENV PATH="/home/airflow/.local/bin:$PATH"
