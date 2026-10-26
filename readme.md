@@ -19,7 +19,7 @@ The system is built upon the **Docker-on-Docker** pattern, utilizing Ephemeral C
 
 The `docker-compose.yaml` configuration ensures an operational setup ready for task execution:
 
-- Airflow is configured to run in **Standalone** mode, consolidating the architecture into a single container instance. This mode is optimized for local development and low-concurrency environments. Scaling can be achieved by migrating to a **Celery Executor** or implementing the **KubernetesPodOperator** for high-concurrency needs.
+- Airflow is configured to run in **Standalone** mode (webserver, scheduler and triggerer in a single container), backed by a **Postgres** container and the **LocalExecutor**, so tasks run as parallel OS processes instead of the single-threaded SQLite setup this used to have. Scaling further can be achieved by migrating to a **Celery Executor** or implementing the **KubernetesPodOperator** for high-concurrency needs.
 - A fallback SMTP email configuration is set up for the Airflow core to report immediate failures.
 - Mapping is performed between the repo and the container directories:
   * **Logs:** The log directory is mounted to persist logs on the host.

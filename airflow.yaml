@@ -1,4 +1,19 @@
 services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: airflow-postgres
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+      POSTGRES_DB: airflow
+    volumes:
+      - ./airflow/postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U airflow"]
+      interval: 5s
+      retries: 10
+    restart: unless-stopped
+
   airflow:
     container_name: airflow
     build:
@@ -6,14 +21,19 @@ services:
       # use our own image as it contains all dependencies to run dags
       dockerfile: Dockerfile.airflow
     command: standalone
+    depends_on:
+      postgres:
+        condition: service_healthy
     ports:
       - "127.0.0.1:8080:8080"
 
     environment:
-      AIRFLOW__CORE__EXECUTOR: SequentialExecutor
+      # LocalExecutor runs tasks as real OS processes, in parallel, backed by Postgres.
+      # SequentialExecutor + SQLite could only run one task at a time and was prone to
+      # the scheduler losing its heartbeat under load.
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
 
-      # Path to SQLite DB (only for local development)
-      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: sqlite:////opt/airflow/airflow.db
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
 
       # Disable Airflow example DAGs
       AIRFLOW__CORE__LOAD_EXAMPLES: 'False'
@@ -45,10 +65,7 @@ services:
       # 4. Plugins (CRITICAL for 'src' to work!)
       - ./airflow/plugins:/opt/airflow/plugins
 
-      # 5. (Optional) Persist SQLite DB outside the container
-      - ./airflow/airflow.db:/opt/airflow/airflow.db
-
-      # 6. enables airflow creating other containers
+      # 5. enables airflow creating other containers
       - /var/run/docker.sock:/var/run/docker.sock
 
     # Use the same UID as host to avoid permission issues
